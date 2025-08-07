@@ -44,7 +44,7 @@
     </thead>
     <tbody>
         @foreach($etudiants as $etudiant)
-            <tr @if(isset($highlightId) && $highlightId == $etudiant->id) class="table-warning" id="highlighted" @endif>
+           <tr class="{{ (isset($highlightId) && $highlightId == $etudiant->id) ? 'table-warning' : '' }}" id="{{ (isset($highlightId) && $highlightId == $etudiant->id) ? 'highlighted' : '' }}">
                 <td>{{ $etudiant->matricule }}</td>
 
                 <form action="{{ route('agent.etudiants.update', $etudiant->id) }}" method="POST">
