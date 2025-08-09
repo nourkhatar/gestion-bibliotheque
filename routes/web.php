@@ -12,18 +12,31 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\RetardController;
 
 /**
- * Auth (guest)
+ * Health check (no middleware) — to verify no forced redirects.
+ */
+Route::get('/health', fn () => 'OK');
+
+/**
+ * Auth (guest-only)
  */
 Route::middleware('guest')->group(function () {
-    Route::get('/',            [AuthController::class, 'showLogin'])->name('login');      // GET login page
+    Route::get('/',            [AuthController::class, 'showLogin'])->name('login');      // login page
     Route::get('/login',       [AuthController::class, 'showLogin']);                     // alias
-    Route::post('/login',      [AuthController::class, 'login'])->name('login.submit');   // POST login
+    Route::post('/login',      [AuthController::class, 'login'])->name('login.submit');   // submit
 });
 
 /**
- * Authenticated
+ * Authenticated-only
  */
 Route::middleware('auth')->group(function () {
+    // Unified home for logged-in users (RedirectIfAuthenticated lands here)
+    Route::get('/home', function () {
+        $u = auth()->user();
+        return $u && $u->role === 'agent'
+            ? redirect()->route('agent.accueil')
+            : redirect()->route('etudiant.accueil');
+    })->name('home');
+
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // Dashboards
@@ -31,14 +44,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/etudiant/accueil', [EtudiantController::class, 'accueil'])->name('etudiant.accueil');
 
     // Étudiant
-    Route::get('/etudiant/catalogue',                 [EtudiantController::class, 'catalogue'])->name('etudiant.catalogue');
-    Route::post('/etudiant/reserver/{id}',            [EtudiantController::class, 'reserver'])->name('etudiant.reserver');
-    Route::get('/etudiant/reservations',              [EtudiantController::class, 'reservations'])->name('etudiant.reservations');
-    Route::get('/etudiant/emprunts',                  [EtudiantController::class, 'emprunts'])->name('etudiant.emprunts');
+    Route::get('/etudiant/catalogue',      [EtudiantController::class, 'catalogue'])->name('etudiant.catalogue');
+    Route::post('/etudiant/reserver/{id}', [EtudiantController::class, 'reserver'])->name('etudiant.reserver');
+    Route::get('/etudiant/reservations',   [EtudiantController::class, 'reservations'])->name('etudiant.reservations');
+    Route::get('/etudiant/emprunts',       [EtudiantController::class, 'emprunts'])->name('etudiant.emprunts');
 
     // Agent: Livres
-    Route::get('/agent/livres',        [LivreController::class, 'index'])->name('agent.livres');
-    Route::post('/agent/livres',       [LivreController::class, 'store'])->name('agent.livres.store');
+    Route::get('/agent/livres',  [LivreController::class, 'index'])->name('agent.livres');
+    Route::post('/agent/livres', [LivreController::class, 'store'])->name('agent.livres.store');
 
     // Agent: Emprunts
     Route::get('/agent/emprunts',              [EmpruntController::class, 'index'])->name('agent.emprunts');
@@ -59,12 +72,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/agent/agents/{id}',    [AgentGestionController::class, 'destroy'])->name('agent.agents.destroy');
 
     // Agent: Réservations & Retards
-    Route::get('/agent/reservations',                      [ReservationController::class, 'index'])->name('agent.reservations');
-    Route::post('/agent/reservations/{id}/valider',        [ReservationController::class, 'valider'])->name('agent.reservations.valider');
-    Route::delete('/agent/reservations/{id}/annuler',      [ReservationController::class, 'annuler'])->name('agent.reservations.annuler');
+    Route::get('/agent/reservations',                 [ReservationController::class, 'index'])->name('agent.reservations');
+    Route::post('/agent/reservations/{id}/valider',   [ReservationController::class, 'valider'])->name('agent.reservations.valider');
+    Route::delete('/agent/reservations/{id}/annuler', [ReservationController::class, 'annuler'])->name('agent.reservations.annuler');
 
     Route::get('/agent/retards', [RetardController::class, 'index'])->name('agent.retards');
 });
 
-/** Optional: redirect unknown routes to login */
+/** Fallback: send unknown routes to login (guest) */
 Route::fallback(fn () => redirect()->route('login'));
