@@ -17,6 +17,11 @@ class Emprunt extends Model
         'statut',
     ];
 
+    protected $casts = [
+        'date_emprunt' => 'date',
+        'date_retour'  => 'date',
+    ];
+
     public function etudiant()
     {
         return $this->belongsTo(Etudiant::class);
@@ -25,5 +30,16 @@ class Emprunt extends Model
     public function livre()
     {
         return $this->belongsTo(Livre::class);
+    }
+
+    
+    public function scopeEnRetard($query)
+    {
+        return $query
+            ->whereNull('date_retour')
+            ->where(function ($q) {
+                $q->where('statut', 'en_retard')
+                  ->orWhere('date_emprunt', '<', now()->subDays(15));
+            });
     }
 }
