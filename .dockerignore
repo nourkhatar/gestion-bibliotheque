@@ -1,0 +1,15 @@
+# Build context minimization
+.git
+.gitignore
+node_modules
+vendor
+storage/*.key
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+public/build
+.env
+.env.*
+docker-compose*.yml
+*.zip
